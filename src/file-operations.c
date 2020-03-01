@@ -48,3 +48,13 @@ int strip(char* s) {
         *p2 = '\0';
         return removed;
 }
+
+int file_exists(const char *f)
+{
+    struct stat buffer;
+    int exist = stat(f,&buffer);
+    if(exist == 0)
+        return 1;
+    else // -1
+        return 0;
+}

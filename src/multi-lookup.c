@@ -11,7 +11,7 @@
 
 /*
  * This isn't technically necessary
- * but it helps loads with readability
+ * but it helps with readability
  *
  * this is just all of the information the
  * producer thread has access to
@@ -72,7 +72,6 @@ void* producer_thread(void* p_context) {
                                 pop_file(p.queue);
                                 serviced ++;
                         }
-
                         pthread_mutex_unlock(&p.queue->file_queue_lock);
                 }
 
@@ -80,8 +79,8 @@ void* producer_thread(void* p_context) {
                 {
                         FILE* fp = file_open(p.file_name, "r");
                         if(fp == NULL){
-                                printf("ERROR TID: %ld\n", tid);
-                                break;
+                                fprintf(stderr, "PRODUCER ERROR TID: %ld, Invalid file: %s\n", tid, p.file_name);
+                                continue;
                         }
 
                         char buffer[MAX_NAME_LENGTH];
@@ -136,10 +135,8 @@ void* consumer_thread(void* c_context) {
         int serviced = 0;
         while(1) {
                 {
-                        printf("%ld\n", c.buff->size);
-                        if(!c.t_status) {
+                        if(!*c.t_status) {
                                 if(c.buff->size <= 0){
-                                        printf("HERE\n");
                                         pthread_mutex_unlock(&c.buff->buffer_lock);
                                         break;
                                 }
@@ -158,22 +155,30 @@ void* consumer_thread(void* c_context) {
                         sem_post(&c.buff->space_available);
                 }
                 {
-                        printf("busy\n");
                         int ret = dnslookup(c.parse_name, c.ip_address, MAX_IP_LENGTH);
-                        printf("done\n");
                         
                         if(ret != UTIL_SUCCESS){
-                                printf("ERROR Thread"); 
+                                fprintf(stderr, "ERROR in dns lookup Thread id: %ld, hostname: %s\n", tid, c.parse_name); 
+
+                                pthread_mutex_lock(&c.output_f->file_lock);
+
+                                file_puts(c.parse_name, c.output_f->fp);
+                                file_puts(",", c.output_f->fp);
+                                file_puts("\n", c.output_f->fp);
+
+                                pthread_mutex_unlock(&c.output_f->file_lock);
+
+                        } else {
+
+                                pthread_mutex_lock(&c.output_f->file_lock);
+
+                                file_puts(c.parse_name, c.output_f->fp);
+                                file_puts(",", c.output_f->fp);
+                                file_puts(c.ip_address, c.output_f->fp);
+                                file_puts("\n", c.output_f->fp);
+
+                                pthread_mutex_unlock(&c.output_f->file_lock);
                         }
-
-                        pthread_mutex_lock(&c.output_f->file_lock);
-
-                        file_puts(c.parse_name, c.output_f->fp);
-                        file_puts(",", c.output_f->fp);
-                        file_puts(c.ip_address, c.output_f->fp);
-                        file_puts("\n", c.output_f->fp);
-
-                        pthread_mutex_unlock(&c.output_f->file_lock);
 
                         serviced ++;
                 }
@@ -266,9 +271,7 @@ buffer create_buffer(pthread_mutex_t buffer_lock, sem_t sa, sem_t ia) {
 }
 
 int push_buffer_element(buffer* buff, const char* str_element) {
-        printf("%ld %ld %ld\n", buff->starting_index, buff->ending_index, buff->size);
         if(buff->size >= BUFFER_SIZE) {
-                /** printf("overflow\n"); */
                 return -1;
         }
 

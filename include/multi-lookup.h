@@ -119,4 +119,3 @@ typedef struct {
 void* consumer_thread(void* c_context);
 
 #endif /* end of include guard MULTI_LOOKUP_H */
-

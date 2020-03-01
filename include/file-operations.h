@@ -9,6 +9,7 @@
 #define ERROR_MACROS_H
 
 #include <stdio.h>
+#include <sys/stat.h>
 #include <errno.h>
 
 FILE* file_open(const char *filename, const char *mode);
@@ -16,6 +17,7 @@ int file_close(FILE *fp);
 int file_puts(const char* s, FILE *fp);
 int file_gets(char *buf, int n, FILE* fp);
 int seek_new_line(FILE* fp);
+int file_exists(const char *f);
 
 // Removes \n and \t from a buffer
 int strip(char* s);
