@@ -27,13 +27,36 @@
 #define BUFFER_SIZE 200
 
 
+
+/*
+ * A shared file type
+ * every file has a mutex and a pointer
+ * if the mutex is locked, it is busy 
+ * (so an open and close needs to complete
+ * within the scope of a mutex lock / unlock)
+ *
+ * NOTE - This is NOT used for files the requesters
+ * are requesting. They don't need mutex locks as their
+ * files are isolated
+ *
+ * This is mainly for the shared log files
+ */
+typedef enum {OPEN, CLOSED} file_state;
+typedef struct {
+        pthread_mutex_t file_lock;
+        file_state state;
+        FILE* fp;
+} shared_file;
+
+
+
 ////////////////// SOME USEFULL DATA STRUCTURES ////////////////////////
 /*
  * A linked list queue of file names
  */
 typedef struct file_node_s file_node;
 struct file_node_s {
-        file f;
+        shared_file sf;
         size_t f_name_size;
         char filename[256];
         file_node* next_file;
@@ -52,25 +75,6 @@ void push_file(file_queue* f_queue, const char* filename);
 void pop_file(file_queue* node);
 void destroy_file_queue(file_queue* q);
 void print_files(file_queue* q);
-
-
-/*
- * A shared file type
- * every file has a mutex and a pointer
- * if the mutex is locked, it is busy 
- * (so an open and close needs to complete
- * within the scope of a mutex lock / unlock)
- *
- * NOTE - This is NOT used for files the requesters
- * are requesting. They don't need mutex locks as their
- * files are isolated
- *
- * This is mainly for the shared log files
- */
-typedef struct {
-        pthread_mutex_t file_lock;
-        FILE* fp;
-} file;
 
 /*
  * A circular buffer type
@@ -103,7 +107,7 @@ void print_buffer(buffer* buff);
  * to create a producer thread
  */
 typedef struct {
-        file* log_f;
+        shared_file* log_f;
         file_queue* f_queue;
         buffer* buff;
 } producer_context;
@@ -111,8 +115,8 @@ typedef struct {
 void* producer_thread(void* p_context);
 
 typedef struct {
-        file* log_f;
-        file* output_f;
+        shared_file* log_f;
+        shared_file* output_f;
         buffer* buff;
         const int* const t_status;
 } consumer_context;

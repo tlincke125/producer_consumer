@@ -17,7 +17,7 @@
  * producer thread has access to
  */
 typedef struct {
-        file* f_log;
+        shared_file* f_log;
         file_queue* queue;
         buffer* buff;
 
@@ -27,8 +27,8 @@ typedef struct {
 
 
 typedef struct {
-        file* log_f;
-        file* output_f;
+        shared_file* log_f;
+        shared_file* output_f;
 
         buffer* buff;
 
@@ -208,9 +208,11 @@ file_queue create_file_queue(pthread_mutex_t f_queue_lock) {
 
 void push_file(file_queue* f_queue, const char* filename) {
         
-        file_node* node = (file_node*)malloc(sizeof(file_node));
+        file_node* node = (file_node*)calloc(1, sizeof(file_node));
         node->f_name_size = strlen(filename);
         strncpy(node->filename, filename, node->f_name_size + 1);
+        pthread_mutex_init(&node->sf.file_lock, NULL);
+        node->sf.fp = NULL;
 
 
         f_queue->size ++;
@@ -230,8 +232,15 @@ void pop_file(file_queue* f_queue) {
         if(f_queue && f_queue->head != NULL) {
                 f_queue->size --;
                 file_node* temp = f_queue->head;
+                pthread_mutex_destroy(&temp->sf.file_lock);
                 f_queue->head = f_queue->head->next_file;
                 free(temp);
+        }
+}
+
+void cycle_file(file_queue* f_queue) {
+        if(f_queue && f_queue->head != NULL) {
+                
         }
 }
 

@@ -82,15 +82,15 @@ int main(int argc, const char** argv) {
         FILE* consumer_log_file = file_open("./consumer_log_file.txt", "w");
         FILE* consumer_results_file = file_open(res_log, "w");
         
-        file producer_log_file_s = 
+        shared_file producer_log_file_s = 
                 {.file_lock = producer_log_file_lock,
                  .fp = producer_log_file};
 
-        file consumer_log_file_s = 
+        shared_file consumer_log_file_s = 
                 {.file_lock = consumer_log_file_lock,
                  .fp = consumer_log_file};
 
-        file consumer_results_file_s = 
+        shared_file consumer_results_file_s = 
                 {.file_lock = consumer_results_file_lock,
                  .fp = consumer_results_file};
 
