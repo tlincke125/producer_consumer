@@ -212,6 +212,7 @@ void push_file(file_queue* f_queue, const char* filename) {
         node->f_name_size = strlen(filename);
         strncpy(node->filename, filename, node->f_name_size + 1);
 
+
         f_queue->size ++;
 
         if(f_queue->head == NULL) {
@@ -293,7 +294,8 @@ int pop_buffer_element(buffer* buff, char destination[MAX_NAME_LENGTH]) {
                 return -1;
         }
 
-        snprintf(destination, strlen(buff->data[buff->starting_index]) + 1, buff->data[buff->starting_index]);
+        snprintf(destination, strlen(buff->data[buff->starting_index]) + 1, 
+                        buff->data[buff->starting_index]);
 
         buff->starting_index = (buff->starting_index + 1) % BUFFER_SIZE;
         buff->size -= 1;
